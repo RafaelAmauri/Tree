@@ -10,7 +10,7 @@ not use any recursion to find the underlying files and subdirectories. Naturally
 
 ## Demo
 
-![Demo](demo/demo.gif)
+![Demo](https://raw.githubusercontent.com/RafaelAmauri/Projects/master/demos/tree.gif)
 
 
 ## Installation
