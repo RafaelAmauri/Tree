@@ -3,6 +3,7 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "headers/linkedstack.h"
 
@@ -10,25 +11,25 @@
 void printTreeEntry(int depth, const char *fullpath);
 int isDirectory(const char *fullpath);
 void addSubcontentToStack(LinkedStack *stack, char *currentFullPath, int currentDepth);
-void listDir(char *ROOT, int MAXDEPTH);
+void listDir(char *WORKINGDIR, int MAXDEPTH);
 
 int main()
 {
-    int MAXDEPTH = -1;
-    //char ROOT[]  = "/home/rafael/Documents";
-    char ROOT[]  = "./";
-    
-    listDir(ROOT, MAXDEPTH);
+    int MAXDEPTH = 10;
+    char WORKINGDIR[4096];
+    getcwd(WORKINGDIR, sizeof(WORKINGDIR));
+
+    listDir(WORKINGDIR, MAXDEPTH);
 
     return 0;
 }
 
 
-void listDir(char *ROOT, int MAXDEPTH)
+void listDir(char *WORKINGDIR, int MAXDEPTH)
 {
-    // Create stack and add ROOT as the first element.
+    // Create stack and add WORKINGDIR as the first element.
     LinkedStack *stack = createLinkedStack();
-    Cell *c1 = createCell(ROOT, ROOT, 0);
+    Cell *c1 = createCell(WORKINGDIR, WORKINGDIR, 0);
     insertInLinkedStack(stack, c1);
     
     char *currentFullPath = (char*) malloc(4096);
@@ -65,12 +66,12 @@ void listDir(char *ROOT, int MAXDEPTH)
 void printTreeEntry(int depth, const char *name) {
     printf("❘");
 
-    for (int i = 0; i < depth; i++)
+    for (int i = 0; i <= depth; i++)
     {
         printf("――");
     }
 
-    printf("| %s\n", name);
+    printf("❘  %s\n", name);
 }
 
 

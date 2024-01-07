@@ -1,4 +1,0 @@
-My implementation of the tree command (https://en.wikipedia.org/wiki/Tree_(command)).
-
-The main goal of this repository is to showcase a memory-efficient implementation of the command that does
-not use any recursion to find the underlying files and subdirectories.
