@@ -8,14 +8,14 @@
 #include "headers/linkedstack.h"
 
 
-void printTreeEntry(int depth, const char *fullpath);
+void printTreeEntry(Cell *cell);
 int isDirectory(const char *fullpath);
-void addSubcontentToStack(LinkedStack *stack, char *currentFullPath, int currentDepth);
+void addSubcontentToStack(LinkedStack *stack);
 void listDir(char *WORKINGDIR, int MAXDEPTH);
 
 int main()
 {
-    int MAXDEPTH = 10;
+    int MAXDEPTH = -1;
     char WORKINGDIR[4096];
     getcwd(WORKINGDIR, sizeof(WORKINGDIR));
 
@@ -25,53 +25,48 @@ int main()
 }
 
 
+/*
+    Given a working directory, lists all subcontents of said working directory that
+    are under, at most, MAXDEPTH subdirectories.
+*/
 void listDir(char *WORKINGDIR, int MAXDEPTH)
 {
     // Create stack and add WORKINGDIR as the first element.
     LinkedStack *stack = createLinkedStack();
     Cell *c1 = createCell(WORKINGDIR, WORKINGDIR, 0);
     insertInLinkedStack(stack, c1);
-    
-    char *currentFullPath = (char*) malloc(4096);
-    char *currentName     = (char*) malloc(255);
-    int currentDepth;
-    
+
     /*
         While there are elements in the stack, print the topmost element,
         pop it off the stack and add its subcontents to the stack.
     */
     while(stack->numElements > 0)
     {
-        memset(currentFullPath, 0, sizeof(currentFullPath));
-        memset(currentName,     0, sizeof(currentName));
-        strcpy(currentFullPath, stack->firstCell->fullpath);
-        strcpy(currentName,     stack->firstCell->name);
-
-        currentDepth = stack->firstCell->depth;
-        removeTopCell(stack);
-
-        if( (MAXDEPTH != -1) && (currentDepth > MAXDEPTH) )
+        // Gets attributes of current subfile (it will always be on top of the stack)
+        if( (MAXDEPTH != -1) && (stack->firstCell->depth > MAXDEPTH) )
         {
             continue;
         }
 
-        printTreeEntry(currentDepth, currentName);
+        // Prints attributes
+        printTreeEntry(stack->firstCell);
 
-        // This function recognizes if currentFullPath is not a directory.
-        addSubcontentToStack(stack, currentFullPath, currentDepth);
+        // This function recognizes if stack->firstCell is a directory, and adds its subcontents to the stack if it is.
+        addSubcontentToStack(stack);
     }
 }
 
 
-void printTreeEntry(int depth, const char *name) {
+// Prints the contents of a cell in a tree-like fashion.
+void printTreeEntry(Cell *cell) {
     printf("❘");
 
-    for (int i = 0; i <= depth; i++)
+    for (int i = 0; i <= cell->depth; i++)
     {
         printf("――");
     }
 
-    printf("❘  %s\n", name);
+    printf("❘  %s\n", cell->name);
 }
 
 
@@ -83,29 +78,50 @@ int isDirectory(const char *fullpath)
 }
 
 
-void addSubcontentToStack(LinkedStack *stack, char *currentFullPath, int currentDepth)
-{
-    if(! isDirectory(currentFullPath))
+/*
+    Checks if the first cell in the stack is a directory. If it is not, remove it from the stack (its name has already been printed in listDir(), so no problem!).
+
+    If it is a directory, gets all subfiles inside of it and adds them to the stack.
+*/
+void addSubcontentToStack(LinkedStack *stack)
+{   
+    // If it is not a dir (i.e., a file), just return!
+    if(! isDirectory(stack->firstCell->fullpath))
+    {   
+        removeTopCell(stack);
         return;
-    
+    }
+
+    // Copy contents from first cell
+    int  currentDepth = stack->firstCell->depth;
+    char currentFullPath[4096]; 
+    strcpy(currentFullPath, stack->firstCell->fullpath);
+
+    // Removes the first cell from the stack. This operation has to be done HERE, otherwise it will get burried later when
+    // we add new cells for the subfiles!!
+    removeTopCell(stack);
+
+    // Open a dir pointer and check for errors.
     DIR *dir = opendir(currentFullPath);
     if (dir == NULL) 
     {
         perror("Error opening directory!");
     }
 
-    struct dirent *d;
-    // A path can be at most 4096 characters long.
+    // pathJoiner will concat the current path(that can be found in the fullPath variable of the cell that was at the top of the stack) with the name of
+    // the subfiles found within <dir>. We need to concat to get the full path for the subfiles.
     char *pathJoiner = (char*)malloc(4096);
 
-    // For each subcontent in dir, add it to the stack.
+    struct dirent *d;
+    // For each subfile in <dir>, create a cell for it and add it to the stack.
     while ((d = readdir(dir)) != NULL)
     {
-        // readdir returns '.' and '..', so we skip those
+        // readdir always returns '.' and '..', so we skip those
         if( (strcmp(d->d_name, ".")  != 0) &&
             (strcmp(d->d_name, "..") != 0)
             )
         {
+            // Resetting the contents in pathJoiner for the next iteration.
             memset(pathJoiner, 0, sizeof(pathJoiner));
             
             strcat(pathJoiner, currentFullPath);
