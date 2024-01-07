@@ -1,89 +1,121 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <dirent.h>
+#include <sys/stat.h>
+#include <string.h>
 
-// Cell for the linked stack.
-typedef struct Cell {
-    struct Cell *next;
-    char *path;
-} Cell;
+#include "headers/linkedstack.h"
 
 
-// Linked Stack referencing the first element.
-typedef struct LinkedStack {
-    int numElements;
-    Cell *firstCell;
-} LinkedStack;
-
-
-void createLinkedStack(LinkedStack *s);
-void createCell(Cell *cell, char *path, Cell *parent);
-void insertInLinkedStack(LinkedStack *s, Cell *cell);
-
-
-void listDir(char* ROOT, int DEPTHLEVEL)
-{
-    DIR *dir;
-
-    if ((dir = opendir(ROOT)) == NULL)
-    {
-        perror("opendir() error");
-    }
-    else
-    {
-        printf("Success");
-    }
-
-}
-
+void printTreeEntry(int depth, const char *fullpath);
+int isDirectory(const char *fullpath);
+void addSubcontentToStack(LinkedStack *stack, char *currentFullPath, int currentDepth);
+void listDir(char *ROOT, int MAXDEPTH);
 
 int main()
 {
-    int DEPTHLEVEL = -1;
-    char ROOT[] = "./";
+    int MAXDEPTH = -1;
+    //char ROOT[]  = "/home/rafael/Documents";
+    char ROOT[]  = "./";
     
-    LinkedStack *s = (LinkedStack*) malloc(sizeof(LinkedStack));
-
-    Cell *c1 = (Cell*) malloc(sizeof(Cell));
-    Cell *c2 = (Cell*) malloc(sizeof(Cell));
-
-    createLinkedStack(s);
-
-    s->firstCell = c1;
-
-    createCell(c1, "1", NULL);
-    createCell(c2, "2", c1);
-
-    insertInLinkedStack(s, c1);
-    insertInLinkedStack(s, c2);
-
-    printf("%d\n", s->numElements);
-    printf("%s\n", s->firstCell->path);
+    listDir(ROOT, MAXDEPTH);
 
     return 0;
 }
 
 
-void createLinkedStack(LinkedStack *s)
+void listDir(char *ROOT, int MAXDEPTH)
 {
-    s->numElements = 0;
-    s->firstCell   = NULL;
+    // Create stack and add ROOT as the first element.
+    LinkedStack *stack = createLinkedStack();
+    Cell *c1 = createCell(ROOT, ROOT, 0);
+    insertInLinkedStack(stack, c1);
+    
+    char *currentFullPath = (char*) malloc(4096);
+    char *currentName     = (char*) malloc(255);
+    int currentDepth;
+    
+    /*
+        While there are elements in the stack, print the topmost element,
+        pop it off the stack and add its subcontents to the stack.
+    */
+    while(stack->numElements > 0)
+    {
+        memset(currentFullPath, 0, sizeof(currentFullPath));
+        memset(currentName,     0, sizeof(currentName));
+        strcpy(currentFullPath, stack->firstCell->fullpath);
+        strcpy(currentName,     stack->firstCell->name);
+
+        currentDepth = stack->firstCell->depth;
+        removeTopCell(stack);
+
+        if( (MAXDEPTH != -1) && (currentDepth > MAXDEPTH) )
+        {
+            continue;
+        }
+
+        printTreeEntry(currentDepth, currentName);
+
+        // This function recognizes if currentFullPath is not a directory.
+        addSubcontentToStack(stack, currentFullPath, currentDepth);
+    }
 }
 
 
-void createCell(Cell *cell, char *path, Cell *parent)
-{
-    cell->path   = path;
+void printTreeEntry(int depth, const char *name) {
+    printf("❘");
 
-    if(parent != NULL)
-        parent->next = cell;
+    for (int i = 0; i < depth; i++)
+    {
+        printf("――");
+    }
+
+    printf("| %s\n", name);
 }
 
 
-void insertInLinkedStack(LinkedStack *s, Cell *cell)
+int isDirectory(const char *fullpath)
 {
-    cell->next = s->firstCell;
+    struct stat path_stat;
+    stat(fullpath, &path_stat);
+    return S_ISDIR(path_stat.st_mode);
+}
 
-    s->firstCell   = cell;
-    s->numElements += 1;
+
+void addSubcontentToStack(LinkedStack *stack, char *currentFullPath, int currentDepth)
+{
+    if(! isDirectory(currentFullPath))
+        return;
+    
+    DIR *dir = opendir(currentFullPath);
+    if (dir == NULL) 
+    {
+        perror("Error opening directory!");
+    }
+
+    struct dirent *d;
+    // A path can be at most 4096 characters long.
+    char *pathJoiner = (char*)malloc(4096);
+
+    // For each subcontent in dir, add it to the stack.
+    while ((d = readdir(dir)) != NULL)
+    {
+        // readdir returns '.' and '..', so we skip those
+        if( (strcmp(d->d_name, ".")  != 0) &&
+            (strcmp(d->d_name, "..") != 0)
+            )
+        {
+            memset(pathJoiner, 0, sizeof(pathJoiner));
+            
+            strcat(pathJoiner, currentFullPath);
+            strcat(pathJoiner, "/");
+            strcat(pathJoiner, d->d_name);
+
+            Cell *aux = createCell(pathJoiner, d->d_name, currentDepth+1);
+            insertInLinkedStack(stack, aux);
+        }
+    }
+
+    free(pathJoiner);
+    closedir(dir);
 }
