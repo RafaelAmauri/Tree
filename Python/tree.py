@@ -19,13 +19,13 @@ def make_parser():
 
 
 def listDir(root, maxDepth):
-    stack = [ root ]
-    level = [ 0 ]
+    stack  = [ root ]
+    depths = [ 0 ]
     
     # Iteratively listing directories
     while stack:
         currentFile  = stack.pop()
-        currentDepth = level.pop()
+        currentDepth = depths.pop()
 
         if maxDepth != -1 and currentDepth > maxDepth:
             continue
@@ -37,7 +37,7 @@ def listDir(root, maxDepth):
             
             for sub in subFiles:
                 stack.append(sub)
-                level.append(currentDepth+1)
+                depths.append(currentDepth+1)
 
 
 def main():
