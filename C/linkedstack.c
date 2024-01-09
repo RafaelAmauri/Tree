@@ -1,14 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include "cell.h"
-
-
-// A compact implementation of a linked stack.
-typedef struct LinkedStack {
-    int numElements;
-    Cell *firstCell;
-} LinkedStack;
-
+#include <linkedstack.h>
 
 /*
     Allocates the linked stack in the memory
