@@ -1,14 +1,4 @@
-#include <stdlib.h>
-#include <string.h>
-
-// Cell for the linked stack.
-typedef struct Cell {
-    char *fullpath;
-    char *name;
-    int depth;
-    struct Cell *next;
-} Cell;
-
+#include <cell.h>
 
 Cell *createCell(char *fullpath, char *name, int depth)
 {
@@ -22,4 +12,6 @@ Cell *createCell(char *fullpath, char *name, int depth)
 
     cell->next  = NULL;
     cell->depth = depth;
+
+    return cell;
 }

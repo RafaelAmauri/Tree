@@ -5,7 +5,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "headers/linkedstack.h"
+#include <linkedstack.h>
 
 
 void printTreeEntry(Cell *cell);
@@ -84,17 +84,17 @@ int isDirectory(const char *fullpath)
     If it is a directory, gets all subfiles inside of it and adds them to the stack.
 */
 void addSubcontentToStack(LinkedStack *stack)
-{   
+{
     // If it is not a dir (i.e., a file), just return!
     if(! isDirectory(stack->firstCell->fullpath))
-    {   
+    {
         removeTopCell(stack);
         return;
     }
 
     // Copy contents from first cell
     int  currentDepth = stack->firstCell->depth;
-    char currentFullPath[4096]; 
+    char currentFullPath[4096];
     strcpy(currentFullPath, stack->firstCell->fullpath);
 
     // Removes the first cell from the stack. This operation has to be done HERE, otherwise it will get burried later when
@@ -103,7 +103,7 @@ void addSubcontentToStack(LinkedStack *stack)
 
     // Open a dir pointer and check for errors.
     DIR *dir = opendir(currentFullPath);
-    if (dir == NULL) 
+    if (dir == NULL)
     {
         perror("Error opening directory!");
     }
@@ -122,8 +122,8 @@ void addSubcontentToStack(LinkedStack *stack)
             )
         {
             // Resetting the contents in pathJoiner for the next iteration.
-            memset(pathJoiner, 0, sizeof(pathJoiner));
-            
+            memset(pathJoiner, 0, strlen(pathJoiner));
+
             strcat(pathJoiner, currentFullPath);
             strcat(pathJoiner, "/");
             strcat(pathJoiner, d->d_name);
