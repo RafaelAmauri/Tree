@@ -6,6 +6,10 @@ INCLUDE=-I./include
 
 all:
 	$(CC) $(INCLUDE) $(FLAGS) $(SRC) -o $(BINARY)
+	strip $(BINARY)
 
 clean:
 	$(RM) $(BINARY)
+
+debug:
+	$(CC) $(INCLUDE) -g $(SRC) -o $(BINARY)
