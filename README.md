@@ -5,7 +5,7 @@ This is my own implementation of the [Tree](https://en.wikipedia.org/wiki/Tree_(
 
 
 The main goal of this repository is to showcase a memory-efficient implementation of the command that does
-not use any recursion to find the underlying files and subdirectories. Naturally, it is not meant to be an extensive implementation that covers all use cases, but it still provides depth control and can flexibly adjusts the working directory.
+not use any recursion to find the underlying files and subdirectories. Naturally, it is not meant to be an extensive implementation that covers all use cases, but it still provides depth control and can flexibly run on user-specified directories.
 
 
 ## Demo
